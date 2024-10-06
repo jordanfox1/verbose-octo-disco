@@ -1,0 +1,30 @@
+PATH
+  remote: .
+  specs:
+    todo (0.0.1)
+      gli (~> 2.21.5)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    gli (2.21.5)
+    minitest (5.25.1)
+    psych (5.1.2)
+      stringio
+    rake (13.2.1)
+    rdoc (6.7.0)
+      psych (>= 4.0.0)
+    stringio (3.1.1)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  minitest
+  rake
+  rdoc
+  todo!
+
+BUNDLED WITH
+   2.5.14

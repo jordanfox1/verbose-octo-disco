@@ -1,0 +1,165 @@
+#!/usr/bin/env ruby
+require 'gli'
+require 'todo'
+require 'json'
+
+
+class App
+  extend GLI::App
+  task = TaskCreator.new
+
+  program_desc 'Todo list'
+
+  version Todo::VERSION
+
+  subcommand_option_handling :normal
+  arguments :strict
+
+  ### Globals ###
+  desc 'Describe some switch here'
+  switch [:s,:switch]
+
+  desc 'Describe some flag here'
+  default_value 'the default'
+  arg_name 'The name of the argument'
+  flag [:f,:flagname]
+
+  ### Commands ###
+  desc 'Add a new task to the todo list'
+  arg_name 'name'
+  command :add do |c|
+    c.desc 'Name of the task'
+    c.default_value 'new task'
+    c.flag [:n, :name]
+
+    c.desc 'Description of the task'
+    c.default_value ''
+    c.flag [:d, :description]
+
+    c.desc 'Status of the task'
+    c.default_value 'todo'
+    c.flag [:s, :status]
+
+    c.action do |global_options,options,args|
+      name = options[:name]
+      description = options[:description]
+      status = options[:status]
+
+      task.create(name, description, status)
+      
+    end
+  end
+
+  desc 'Delete a task'
+  arg_name 'Describe arguments to delete here'
+  command :delete do |c|
+    c.desc 'Name of the task'
+    c.flag [:n, :name]
+
+    c.desc "ID of the task"
+    c.flag [:i, :id]
+    c.action do |global_options,options,args|
+      name = options[:name]
+      id = options[:id]
+      error = "Could not delete task. Please double check your inputs and try again"
+
+      puts error and next unless id || name
+  
+      deleted = if id
+                  task.delete_by_id(id)
+                else
+                  task.delete_by_name(name)
+                end
+  
+      puts deleted ? "deleted task: #{JSON.pretty_generate(deleted)}" : error
+    end
+  end
+
+  desc 'Update a task'
+  arg_name 'Describe arguments to update here'
+  command :update do |c|
+    c.desc 'Name of the task'
+    c.flag [:n, :name]
+
+    c.desc "Description of the task"
+    c.flag [:d, :description]
+
+    c.desc "ID of the task to update"
+    c.flag [:i, :id]
+    c.action do |global_options,options,args|
+      name = options[:name]
+      desc = options[:description]
+      id = options[:id]
+      error = "Could not update task, Please double check your inputs and try again"
+
+      puts error and next unless id && name || description
+
+      updated = if name
+                  task.update_name(id, name)
+                end
+      updated = if desc
+                  task.update_description(id, desc)
+                end
+
+      puts updated ? "updated task: #{JSON.pretty_generate(updated)}" : error
+    end
+  end
+
+  desc 'Mark a task as complete'
+  arg_name 'Describe arguments to complete here'
+  command :complete do |c|
+    c.desc "ID of the task to complete"
+    c.flag [:i, :id]
+    
+    c.action do |global_options,options,args|
+      id = options[:id]
+      task.complete(id)
+      puts "completed task: #{JSON.pretty_generate(task)}"
+    end
+  end
+
+  desc 'Describe list here'
+  arg_name 'Describe arguments to list here'
+
+  command :list do |c|
+    c.action do |global_options,options,args|
+      tasks = task.list_all()
+      puts JSON.pretty_generate(tasks)
+    end
+  end
+
+  desc 'Show a single task'
+  arg_name 'Describe arguments to show here'
+  command :show do |c|
+    c.desc "ID of the task to show"
+    c.flag [:i, :id]
+    c.action do |global_options,options,args|
+      id = options[:id]
+      task = task.get(id)
+      puts task ? JSON.pretty_generate(task) : "Could not find task with id: #{id}"
+    end
+  end
+
+  pre do |global,command,options,args|
+    # Pre logic here
+    # Return true to proceed; false to abort and not call the
+    # chosen command
+    # Use skips_pre before a command to skip this block
+    # on that command only
+    true
+  end
+
+  post do |global,command,options,args|
+    # Post logic here
+    # Use skips_post before a command to skip this
+    # block on that command only
+  end
+
+  on_error do |exception|
+    # Error logic here
+    # return false to skip default error handling
+    true
+  end
+end
+
+exit App.run(ARGV)
